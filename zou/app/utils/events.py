@@ -67,6 +67,8 @@ def emit(event, data={}, persist=True, project_id=None):
     event_handlers = handlers.get(event, {})
     if project_id is not None:
         data["project_id"] = project_id
+
+    data["event"] = event
     data = fields.serialize_dict(data)
     publisher_store.publish(event, data)
     if persist:

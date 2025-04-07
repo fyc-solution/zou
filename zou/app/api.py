@@ -78,15 +78,30 @@ def register_event_handlers(app):
     Load code from event handlers folder. Then it registers in the event manager
     each event handler listed in the __init_.py.
     """
+    app.logger.info("=== Starting event handler registration ===")
+    app.logger.info(f"Loading event handlers from: {app.config['EVENT_HANDLERS_FOLDER']}")
     sys.path.insert(0, app.config["EVENT_HANDLERS_FOLDER"])
     try:
         import event_handlers
+        app.logger.info("Successfully imported event_handlers module")
 
-        events.register_all(event_handlers.event_map, app)
-    except ImportError:
+        # Print the event map to see what's being registered
+        if hasattr(event_handlers, 'event_map'):
+            app.logger.info(f"Found event_map with {len(event_handlers.event_map)} entries:")
+            for event_name, handler_module in event_handlers.event_map.items():
+                module_name = handler_module.__name__.split(".")[-1]
+                app.logger.info(f"  - Event '{event_name}' will be handled by '{module_name}'")
+            
+            events.register_all(event_handlers.event_map, app)
+            app.logger.info("All event handlers registered successfully")
+        else:
+            app.logger.warning("event_handlers module does not contain an event_map")
+    except ImportError as e:
         # Event handlers folder is not properly configured.
         # Handlers are optional, that's why this error is ignored.
         # app.logger.info("No event handlers folder is configured.")
+        app.logger.warning(f"Failed to import event_handlers: {str(e)}")
+        app.logger.warning(f"Event handlers directory might not be configured properly or missing __init__.py")
         pass
     return app
 
